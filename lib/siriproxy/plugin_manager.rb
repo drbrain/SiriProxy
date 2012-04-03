@@ -4,7 +4,8 @@ require 'pp'
 class SiriProxy::PluginManager < Cora
   attr_accessor :plugins, :iphone_conn, :guzzoni_conn
 
-  def initialize(plugin_config)
+  def initialize(log, plugin_config)
+    @log = log
     @plugin_config = plugin_config
 
     load_plugins
@@ -27,7 +28,7 @@ class SiriProxy::PluginManager < Cora
           @plugins << plugin
       end
     end
-    log "Plugins laoded: #{@plugins}"
+    @log.info "Plugins laoded: #{@plugins}"
   end
 
   def process_filters(object, direction)
@@ -49,7 +50,7 @@ class SiriProxy::PluginManager < Cora
   end
 
   def send_request_complete_to_iphone
-    log "Sending Request Completed"
+    @log.info "Sending Request Completed"
     object = generate_request_completed(self.guzzoni_conn.last_ref_id)
     self.guzzoni_conn.inject_object_to_output_stream(object)
   end
@@ -60,9 +61,5 @@ class SiriProxy::PluginManager < Cora
 
   def no_matches
     return false
-  end
-
-  def log(text)
-    puts "[Info - Plugin Manager] #{text}" if $LOG_LEVEL >= 1
   end
 end

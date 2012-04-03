@@ -1,6 +1,7 @@
 require 'optparse'
 require 'yaml'
 require 'ostruct'
+require 'logger'
 
 # @todo want to make SiriProxy::Commandline without having to
 # require 'siriproxy'. Im sure theres a better way.
@@ -148,6 +149,7 @@ Options:
 
     # Google Public DNS servers
     @app_config.upstream_dns ||= %w[8.8.8.8 8.8.4.4]
+    @app_config.log = Logger.new $stderr
 
     @branch = nil
 
@@ -156,7 +158,7 @@ Options:
         @app_config.port = port_num
       end
       opts.on('-l', '--log LOG_LEVEL', '[server]   The level of debug information displayed (higher is more)') do |log_level|
-        @app_config.log_level = log_level
+        @app_config.log.level = log_level.to_i
       end
       opts.on(      '--upstream-dns SERVERS', Array, '[server]   List of upstream DNS servers to query for the real guzzoni.apple.com.  Defaults to Google DNS servers') do |servers|
         @app_config.upstream_dns = servers

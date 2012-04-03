@@ -2,7 +2,7 @@
 # This is the connection to the Guzzoni (the Siri server backend)
 #####
 class SiriProxy::Connection::Guzzoni < SiriProxy::Connection
-  def initialize
+  def initialize log
     super
     self.name = "Guzzoni"
   end

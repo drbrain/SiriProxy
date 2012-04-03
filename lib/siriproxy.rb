@@ -9,20 +9,19 @@ class String
 end
 
 class SiriProxy
-  def initialize app_config
-    @plugin_config = app_config.plugins
-    @port          = app_config.port
-    @upstream_dns  = app_config.upstream_dns
-    @user          = app_config.user
-    # @todo shouldnt need this, make centralize logging instead
-    $LOG_LEVEL = @app_config.log_level.to_i
+  def initialize config
+    @log           = config.log
+    @plugin_config = config.plugins
+    @port          = config.port
+    @upstream_dns  = config.upstream_dns
+    @user          = config.user
 
     EventMachine.run do
       begin
-        puts "Starting SiriProxy on port #{@port}.."
+        @log.info "Starting SiriProxy on port #{@port}.."
 
-        EventMachine::start_server('0.0.0.0', @port, SiriProxy::Connection::Iphone, @upstream_dns) { |conn|
-          $stderr.puts "start conn #{conn.inspect}"
+        EventMachine::start_server('0.0.0.0', @port, SiriProxy::Connection::Iphone, @log, @upstream_dns) { |conn|
+          @log.info "start conn #{conn.inspect}"
           conn.plugin_manager = SiriProxy::PluginManager.new(@plugins)
           conn.plugin_manager.iphone_conn = conn
         }

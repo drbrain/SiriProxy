@@ -4,9 +4,9 @@ require 'resolv'
   # This is the connection to the iPhone
 #####
 class SiriProxy::Connection::Iphone < SiriProxy::Connection
-  def initialize upstream_dns
+  def initialize log, upstream_dns
     puts "Create server for iPhone connection"
-    super()
+    super(log)
     self.name = "iPhone"
     @upstream_dns = upstream_dns
   end
@@ -36,7 +36,7 @@ class SiriProxy::Connection::Iphone < SiriProxy::Connection
 
   def ssl_handshake_completed
     super
-    self.other_connection = EventMachine.connect(resolve_guzzoni, 443, SiriProxy::Connection::Guzzoni)
+    self.other_connection = EventMachine.connect(resolve_guzzoni, 443, SiriProxy::Connection::Guzzoni, @log)
     self.plugin_manager.guzzoni_conn = self.other_connection
     other_connection.other_connection = self #hehe
     other_connection.plugin_manager = plugin_manager

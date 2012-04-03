@@ -11,8 +11,9 @@ class SiriProxy::Connection < EventMachine::Connection
     self.other_connection.last_ref_id = ref_id if other_connection.last_ref_id != ref_id
   end
 
-  def initialize
-    super
+  def initialize log
+    super()
+    @log = log
     self.processed_headers = false
     self.output_buffer = ""
     self.input_buffer = ""
@@ -30,13 +31,13 @@ class SiriProxy::Connection < EventMachine::Connection
   def ssl_handshake_completed
     self.ssled = true
 
-    puts "[Info - #{self.name}] SSL completed for #{self.name}" if $LOG_LEVEL > 1
+    @log.info "#{self.name} SSL completed"
   end
 
   def receive_line(line) #Process header
-    puts "[Header - #{self.name}] #{line}" if $LOG_LEVEL > 2
+    @log.info "#{self.name} header #{line}"
     if(line == "") #empty line indicates end of headers
-      puts "[Debug - #{self.name}] Found end of headers" if $LOG_LEVEL > 3
+      @log.debug "#{self.name} end of headers"
       set_binary_mode
       self.processed_headers = true
     end
@@ -64,22 +65,18 @@ class SiriProxy::Connection < EventMachine::Connection
     return if output_buffer.empty?
 
     if other_connection.ssled
-      puts "[Debug - #{self.name}] Forwarding #{self.output_buffer.length} bytes of data to #{other_connection.name}" if $LOG_LEVEL > 5
-      #puts  self.output_buffer.to_hex if $LOG_LEVEL > 5
+      @log.debug "#{self.name} forwarding #{@output_buffer.length} bytes to #{other_connection}.name}"
       other_connection.send_data(output_buffer)
       self.output_buffer = ""
     else
-      puts "[Debug - #{self.name}] Buffering some data for later (#{self.output_buffer.length} bytes buffered)" if $LOG_LEVEL > 5
-      #puts  self.output_buffer.to_hex if $LOG_LEVEL > 5
+      @log.debug "#{self.name} buffering #{@output_buffer.length} bytes"
     end
   end
 
   def process_compressed_data
     self.unzipped_input << unzip_stream.inflate(self.input_buffer)
     self.input_buffer = ""
-    puts "========UNZIPPED DATA (from #{self.name} =========" if $LOG_LEVEL > 5
-    puts unzipped_input.to_hex if $LOG_LEVEL > 5
-    puts "==================================================" if $LOG_LEVEL > 5
+    @log.debug "#{self.name} unzipped #{unzipped_input}"
 
     while(self.has_next_object?)
       object = read_next_object_from_unzipped()
@@ -114,7 +111,7 @@ class SiriProxy::Connection < EventMachine::Connection
       self.unzipped_output << object
 
       type = (info[1] == "3") ? "Ping" : "Pong"
-      puts "[#{type} - #{self.name}] (#{info[2].to_i(16)})" if $LOG_LEVEL > 3
+      @log.info "#{self.name} #{self.type} #{info[2].to_i 16}"
       self.unzipped_input = unzipped_input[5..-1]
 
       flush_unzipped_output()
@@ -142,7 +139,7 @@ class SiriProxy::Connection < EventMachine::Connection
       self.last_ref_id = object["refId"]
     end
 
-    puts "[Info - Forwarding object to #{self.other_connection.name}] #{object["class"]}" if $LOG_LEVEL > 1
+    @log.info "#{self.name} forwarding #{object['class']} to #{@other_connection.name}"
 
     object_data = object.to_plist(:plist_format => CFPropertyList::List::FORMAT_BINARY)
 
@@ -167,21 +164,17 @@ class SiriProxy::Connection < EventMachine::Connection
 
   def prep_received_object(object)
     if object["refId"] == self.last_ref_id && @block_rest_of_session
-      puts "[Info - Dropping Object from Guzzoni] #{object["class"]}" if $LOG_LEVEL > 1
-      pp object if $LOG_LEVEL > 3
+      @log.info "#{self.name} dropping #{object['class']}"
       return nil
     end
 
-    puts "[Info - #{self.name}] Received Object: #{object["class"]}" if $LOG_LEVEL == 1
-    puts "[Info - #{self.name}] Received Object: #{object["class"]} (group: #{object["group"]})" if $LOG_LEVEL == 2
-    puts "[Info - #{self.name}] Received Object: #{object["class"]} (group: #{object["group"]}, ref_id: #{object["refId"]}, ace_id: #{object["aceId"]})" if $LOG_LEVEL > 2
-    pp object if $LOG_LEVEL > 3
+    @log.info "#{self.name} received #{object['class']}"
+    @log.debug "#{self.name} group: #{object['group']} ref_id: #{object['refId']} ace_id: #{object['aceId']}"
 
     #keeping this for filters
     new_obj = received_object(object)
     if new_obj == nil
-      puts "[Info - Dropping Object from #{self.name}] #{object["class"]}" if $LOG_LEVEL > 1
-      pp object if $LOG_LEVEL > 3
+      @log.info "#{self.name} dropping #{object['class']}"
       return nil
     end
 
