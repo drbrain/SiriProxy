@@ -9,26 +9,32 @@ class String
 end
 
 class SiriProxy
-  def initialize()
+  def initialize app_config
+    @plugin_config = app_config.plugins
+    @port          = app_config.port
+    @upstream_dns  = app_config.upstream_dns
+    @user          = app_config.user
     # @todo shouldnt need this, make centralize logging instead
-    $LOG_LEVEL = $APP_CONFIG.log_level.to_i
+    $LOG_LEVEL = @app_config.log_level.to_i
+
     EventMachine.run do
       begin
-        puts "Starting SiriProxy on port #{$APP_CONFIG.port}.."
-        EventMachine::start_server('0.0.0.0', $APP_CONFIG.port, SiriProxy::Connection::Iphone, $APP_CONFIG.upstream_dns) { |conn|
+        puts "Starting SiriProxy on port #{@port}.."
+
+        EventMachine::start_server('0.0.0.0', @port, SiriProxy::Connection::Iphone, @upstream_dns) { |conn|
           $stderr.puts "start conn #{conn.inspect}"
-          conn.plugin_manager = SiriProxy::PluginManager.new()
+          conn.plugin_manager = SiriProxy::PluginManager.new(@plugins)
           conn.plugin_manager.iphone_conn = conn
         }
       rescue RuntimeError => err
         if err.message == "no acceptor"
-          raise "Cannot start the server on port #{$APP_CONFIG.port} - are you root, or have another process on this port already?"
+          raise "Cannot start the server on port #{@port} - are you root, or have another process on this port already?"
         else
           raise
         end
       end
 
-      EventMachine.set_effective_user($APP_CONFIG.user) if $APP_CONFIG.user
+      EventMachine.set_effective_user(@user) if @user
     end
   end
 end

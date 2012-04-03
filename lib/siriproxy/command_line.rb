@@ -46,7 +46,7 @@ Options:
 
   def run_console
     load_code
-    $LOG_LEVEL = 0
+
     # this is ugly, but works for now
     SiriProxy::PluginManager.class_eval do
       def respond(text, options={})
@@ -61,10 +61,12 @@ Options:
         puts "No plugin responded"
       end
     end
+
     SiriProxy::Plugin.class_eval do
       def last_ref_id
         0
       end
+
       def send_object(object, options={:target => :iphone})
         puts "=> #{object}"
       end
@@ -140,23 +142,27 @@ Options:
   private
 
   def parse_options
-    $APP_CONFIG = OpenStruct.new(YAML.load_file(File.expand_path('~/.siriproxy/config.yml')))
+    config_yml = File.expand_path('~/.siriproxy/config.yml')
+    config     = YAML.load_file(config_file)
+    @app_config = OpenStruct.new(config)
 
     # Google Public DNS servers
-    $APP_CONFIG.upstream_dns ||= %w[8.8.8.8 8.8.4.4]
+    @app_config.upstream_dns ||= %w[8.8.8.8 8.8.4.4]
 
     @branch = nil
+
     @option_parser = OptionParser.new do |opts|
       opts.on('-p', '--port PORT',     '[server]   port number for server (central or node)') do |port_num|
-        $APP_CONFIG.port = port_num
+        @app_config.port = port_num
       end
       opts.on('-l', '--log LOG_LEVEL', '[server]   The level of debug information displayed (higher is more)') do |log_level|
-        $APP_CONFIG.log_level = log_level
+        @app_config.log_level = log_level
       end
       opts.on(      '--upstream-dns SERVERS', Array, '[server]   List of upstream DNS servers to query for the real guzzoni.apple.com.  Defaults to Google DNS servers') do |servers|
-        $APP_CONFIG.upstream_dns = servers
+        @app_config.upstream_dns = servers
+      end
       opts.on('-u', '--user USER',     '[server]   The user to run as after launch') do |user|
-        $APP_CONFIG.user = user
+        @app_config.user = user
       end
       opts.on('-b', '--branch BRANCH', '[update]   Choose the branch to update from (default: master)') do |branch|
         @branch = branch
@@ -170,8 +176,11 @@ Options:
         exit
       end
     end
+
     @option_parser.banner = BANNER
     @option_parser.parse!(ARGV)
+
+    @app_config
   end
 
   def setup_bundler_path
