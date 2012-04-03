@@ -20,7 +20,7 @@ Commands:
 server            Start up the Siri proxy server
 gencerts          Generate a the certificates needed for SiriProxy
 bundle            Install any dependancies needed by plugins
-console           Launch the plugin test console 
+console           Launch the plugin test console
 update [dir]      Updates to the latest code from GitHub or from a provided directory
 help              Show this usage information
 
@@ -46,7 +46,7 @@ Options:
 
   def run_console
     load_code
-    $LOG_LEVEL = 0 
+    $LOG_LEVEL = 0
     # this is ugly, but works for now
     SiriProxy::PluginManager.class_eval do
       def respond(text, options={})
@@ -111,7 +111,7 @@ Options:
       puts "=== Bundling ===" if $?.exitstatus == 0
       puts `siriproxy bundle` if $?.exitstatus == 0
       puts "=== SUCCESS ===" if $?.exitstatus == 0
-      
+
       exit $?.exitstatus
     else
       branch_opt = @branch ? "-b #{@branch}" : ""
@@ -130,7 +130,7 @@ Options:
       puts "=== SUCCESS ===" if $?.exitstatus == 0
 
       exit $?.exitstatus
-    end 
+    end
   end
 
   def usage
@@ -138,7 +138,7 @@ Options:
   end
 
   private
-  
+
   def parse_options
     $APP_CONFIG = OpenStruct.new(YAML.load_file(File.expand_path('~/.siriproxy/config.yml')))
 
@@ -163,7 +163,7 @@ Options:
       end
       opts.on('-n', '--name CA_NAME',  '[gencerts] Define a common name for the CA (default: "SiriProxyCA")') do |ca_name|
         @ca_name = ca_name
-      end 
+      end
       opts.on_tail('-v', '--version',  '           show version') do
         require "siriproxy/version"
         puts "SiriProxy version #{SiriProxy::VERSION}"

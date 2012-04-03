@@ -9,7 +9,6 @@ class String
 end
 
 class SiriProxy
-  
   def initialize()
     # @todo shouldnt need this, make centralize logging instead
     $LOG_LEVEL = $APP_CONFIG.log_level.to_i

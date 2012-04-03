@@ -25,10 +25,10 @@ class SiriProxy::Connection::Iphone < SiriProxy::Connection
   def resolve_guzzoni
     addresses = Resolv::DNS.open(nameserver: @upstream_dns) do |dns|
       res = dns.getresources('guzzoni.apple.com', Resolv::DNS::Resource::IN::A)
-    
+
       res.map { |r| r.address }
     end
-    
+
     addresses.map do |address|
       address.address.unpack('C*').join('.')
     end.sample
@@ -41,7 +41,7 @@ class SiriProxy::Connection::Iphone < SiriProxy::Connection
     other_connection.other_connection = self #hehe
     other_connection.plugin_manager = plugin_manager
   end
-  
+
   def received_object(object)
     return plugin_manager.process_filters(object, :from_iphone)
 
